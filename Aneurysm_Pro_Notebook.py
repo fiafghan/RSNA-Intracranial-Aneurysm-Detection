@@ -455,11 +455,13 @@ def train_one_epoch(model, loader, optimizer, loss_fn, device, scaler, amp: bool
             with cuda_autocast(enabled=amp):
                 logits = model(x)
                 loss = loss_fn(logits, y)
-        scaler.scale(loss).backward()
-        if CFG.grad_clip is not None:
-            scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), CFG.grad_clip)
+        # average loss across accumulation steps
+        loss_to_backprop = loss / max(1, CFG.grad_accum)
+        scaler.scale(loss_to_backprop).backward()
         if step % CFG.grad_accum == 0:
+            if CFG.grad_clip is not None:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), CFG.grad_clip)
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad(set_to_none=True)
