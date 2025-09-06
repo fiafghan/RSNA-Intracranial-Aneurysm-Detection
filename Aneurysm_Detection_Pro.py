@@ -26,7 +26,7 @@ import math
 import random
 import gc
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Any, Tuple
 
 import numpy as np
@@ -83,8 +83,8 @@ class CFG:
     in_channels: int = 3  # 2.5D (3 slices)
 
     # Labels order (13 locations + Aneurysm Present)
-    label_order: List[str] = (
-        [
+    label_order: List[str] = field(
+        default_factory=lambda: [
             "Left Infraclinoid Internal Carotid Artery",
             "Right Infraclinoid Internal Carotid Artery",
             "Left Supraclinoid Internal Carotid Artery",
